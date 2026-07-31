@@ -3,6 +3,10 @@ import { CommonModule } from '@angular/common';
 import { OrgChart } from 'd3-org-chart';
 import { OrganogramaService } from './organograma.service';
 import { MatIconModule} from '@angular/material/icon';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { FuncionarioModalComponent } from '../components/funcionario-modal/funcionario-modal.component';
+import { MatButtonModule } from '@angular/material/button';
+import { Funcionario } from '../models/models';
 
 export interface NodeOrganograma {
   id: string;
@@ -13,10 +17,12 @@ export interface NodeOrganograma {
   imagem?: string;
 }
 
+const ORGANOGRAM_ROOT_ID = '__organograma_root__';
+
 @Component({
   selector: 'app-organograma',
   standalone: true,
-  imports: [CommonModule, MatIconModule],
+  imports: [CommonModule, MatIconModule, MatDialogModule, MatButtonModule],
   templateUrl: './organograma.component.html',
   styleUrl: './organograma.component.scss'
 })
@@ -25,6 +31,7 @@ export class OrganogramaComponent implements OnInit, AfterViewInit {
   @ViewChild('chartContainer', { static: false }) chartContainer!: ElementRef;
 
   private organogramaService = inject(OrganogramaService);
+  private dialog = inject(MatDialog);
 
   chart: OrgChart<NodeOrganograma> | null = null;
   listaDados: NodeOrganograma[] = [];
@@ -44,10 +51,33 @@ export class OrganogramaComponent implements OnInit, AfterViewInit {
   carregarDados(): void {
     this.organogramaService.obterDados().subscribe({
       next: (dados) => {
-        this.listaDados = dados;
+        const mappedData = dados.map((f: Funcionario) => ({
+          id: String(f.id ?? ''),
+          parentId: f.parentId != null ? String(f.parentId) : null,
+          name: f.name,
+          cargo: typeof f.cargo === 'string' ? f.cargo : f.cargo?.nome || '',
+          departamento: typeof f.departamento === 'string' ? f.departamento : f.departamento?.nome || '',
+          imagem: f.imagem
+        }));
+
+        const roots = mappedData.filter(node => !node.parentId);
+        this.listaDados = roots.length > 1
+          ? [
+              {
+                id: ORGANOGRAM_ROOT_ID,
+                parentId: null,
+                name: 'Organização',
+                cargo: '',
+                departamento: '',
+                imagem: undefined
+              },
+              ...mappedData.map(node => ({
+                ...node,
+                parentId: node.parentId || ORGANOGRAM_ROOT_ID
+              }))
+            ]
+          : mappedData;
         this.carregando = false;
-        console.log(this.carregando);
-        console.log(this.listaDados);
 
         // Garante que o container HTML já existe na DOM antes de renderizar
         setTimeout(() => this.renderizarOrganograma(), 0);
@@ -93,6 +123,26 @@ export class OrganogramaComponent implements OnInit, AfterViewInit {
       // =========================================================
 
       .nodeContent((node: any) => {
+        if (node.data.id === ORGANOGRAM_ROOT_ID) {
+          return `
+          <div style="
+            background: linear-gradient(135deg, rgba(15,188,249,0.14), rgba(142,68,173,0.14));
+            border: 1px solid rgba(15,188,249,0.35);
+            border-radius: 14px;
+            padding: 14px 18px;
+            color: #fff;
+            font-family: sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            box-sizing: border-box;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+          ">Organização</div>
+        `;
+        }
+
         return `
         <div style="
           background-color: #ffffff;
@@ -137,5 +187,16 @@ export class OrganogramaComponent implements OnInit, AfterViewInit {
     setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
     }, 300);
+  }
+
+  abrirModalFuncionarios(): void {
+    this.dialog.open(FuncionarioModalComponent, {
+      width: '1200px',
+      height: '90vh',
+      maxWidth: '95vw',
+      panelClass: 'premium-modal'
+    }).afterClosed().subscribe(() => {
+      this.carregarDados(); // Recarregar organograma se houver mudanças
+    });
   }
 }

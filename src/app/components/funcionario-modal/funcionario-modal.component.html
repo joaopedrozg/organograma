@@ -1,0 +1,183 @@
+<div class="modal-container">
+  <div class="modal-header">
+    <div class="title-with-icon">
+      <mat-icon class="neon-icon">badge</mat-icon>
+      <h2 mat-dialog-title>Gestão de Talentos</h2>
+    </div>
+    <button mat-icon-button (click)="fechar()" matTooltip="Fechar">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content class="mat-typography custom-scroll">
+    <div class="grid-layout">
+      <!-- Coluna Formulário (Esquerda) -->
+      <section class="form-section glass-card">
+        <div class="section-header">
+          <mat-icon>person_add</mat-icon>
+          <h3>{{ editingFuncionarioId ? 'Editar Colaborador' : 'Novo Colaborador' }}</h3>
+        </div>
+
+        <form [formGroup]="funcionarioForm" class="funcionario-form">
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Nome Completo</mat-label>
+              <input matInput formControlName="name" placeholder="Ex: João Silva">
+              <mat-icon matPrefix>account_circle</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>URL da Imagem</mat-label>
+              <input matInput formControlName="imagem" placeholder="https://...">
+              <mat-icon matPrefix>image</mat-icon>
+            </mat-form-field>
+
+            <div class="autocomplete-field">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Cargo</mat-label>
+                <input type="text" placeholder="Pesquise o cargo" matInput formControlName="cargo" [matAutocomplete]="autoCargo">
+                <mat-icon matPrefix>work</mat-icon>
+                <mat-autocomplete #autoCargo="matAutocomplete" [displayWith]="displayFn">
+                  @for (cargo of filteredCargos | async; track cargo.id) {
+                    <mat-option [value]="cargo">
+                      {{cargo.nome}}
+                    </mat-option>
+                  }
+                </mat-autocomplete>
+              </mat-form-field>
+              <button mat-icon-button color="primary" type="button" (click)="addCargo()" matTooltip="Criar Novo Cargo" class="add-inline">
+                <mat-icon>add_circle</mat-icon>
+              </button>
+            </div>
+
+            <div class="autocomplete-field">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Departamento</mat-label>
+                <input type="text" placeholder="Pesquise o departamento" matInput formControlName="departamento" [matAutocomplete]="autoDepto">
+                <mat-icon matPrefix>business</mat-icon>
+                <mat-autocomplete #autoDepto="matAutocomplete" [displayWith]="displayFn">
+                  @for (depto of filteredDepartamentos | async; track depto.id) {
+                    <mat-option [value]="depto">
+                      {{depto.nome}}
+                    </mat-option>
+                  }
+                </mat-autocomplete>
+              </mat-form-field>
+              <button mat-icon-button color="primary" type="button" (click)="addDepartamento()" matTooltip="Criar Novo Departamento" class="add-inline">
+                <mat-icon>add_circle</mat-icon>
+              </button>
+            </div>
+
+            <div class="autocomplete-field">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Gestor</mat-label>
+                <input type="text" placeholder="Pesquise o gestor" matInput formControlName="parentId" [matAutocomplete]="autoGestor">
+                <mat-icon matPrefix>supervisor_account</mat-icon>
+                <mat-autocomplete #autoGestor="matAutocomplete" [displayWith]="displayFn">
+                  @for (gestor of filteredGestores | async; track gestor.id) {
+                    <mat-option [value]="gestor">
+                      {{gestor.name}}
+                    </mat-option>
+                  }
+                </mat-autocomplete>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button mat-flat-button class="btn-gradient" (click)="salvar()" [disabled]="funcionarioForm.invalid || isSaving()">
+              @if (isSaving()) {
+                <mat-spinner diameter="18"></mat-spinner>
+              } @else {
+                <mat-icon>{{ editingFuncionarioId ? 'save' : 'person_add' }}</mat-icon>
+              }
+              {{ editingFuncionarioId ? 'Salvar Alterações' : 'Contratar Agora' }}
+            </button>
+            @if (editingFuncionarioId) {
+              <button mat-stroked-button (click)="resetForm()" color="warn">
+                <mat-icon>cancel</mat-icon>
+                Cancelar
+              </button>
+            }
+          </div>
+        </form>
+      </section>
+
+      <!-- Coluna Listagem (Direita) -->
+      <section class="list-section glass-card">
+        <div class="section-header">
+          <div class="header-main">
+            <mat-icon>groups</mat-icon>
+            <h3>Quadro de Funcionários</h3>
+          </div>
+          <span class="badge neon-text">{{ filteredFuncionarios().length }} Total</span>
+        </div>
+
+        <div class="search-bar">
+          <mat-form-field appearance="outline" class="full-width no-subscript">
+            <mat-icon matPrefix>search</mat-icon>
+            <input matInput [formControl]="buscaControl" placeholder="Filtrar por nome, cargo ou setor...">
+          </mat-form-field>
+        </div>
+
+        <div class="table-wrapper custom-scroll">
+          <table mat-table [dataSource]="filteredFuncionarios()" class="modern-table">
+
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef> Colaborador </th>
+              <td mat-cell *matCellDef="let f">
+                <div class="user-info">
+                  <div class="avatar-container">
+                    <img [src]="f.imagem || 'assets/default-avatar.png'" class="avatar-img">
+                    <div class="online-indicator"></div>
+                  </div>
+                  <div class="user-details">
+                    <span class="user-name">{{f.name}}</span>
+                    <span class="user-id">ID: {{f.id.substring(0,8)}}</span>
+                  </div>
+                </div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="cargo">
+              <th mat-header-cell *matHeaderCellDef> Cargo </th>
+              <td mat-cell *matCellDef="let f">
+                <mat-chip-set>
+                  <mat-chip class="chip-cargo">{{f.cargo?.nome}}</mat-chip>
+                </mat-chip-set>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="departamento">
+              <th mat-header-cell *matHeaderCellDef> Departamento </th>
+              <td mat-cell *matCellDef="let f">
+                <span class="dept-text">{{f.departamento?.nome}}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="acoes">
+              <th mat-header-cell *matHeaderCellDef> </th>
+              <td mat-cell *matCellDef="let f">
+                <div class="row-actions">
+                  <button mat-icon-button class="edit-btn" (click)="editar(f)" matTooltip="Editar Perfil">
+                    <mat-icon>edit_note</mat-icon>
+                  </button>
+                </div>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="editar(row)" class="animated-row"></tr>
+          </table>
+
+          @if (filteredFuncionarios().length === 0) {
+            <div class="empty-state">
+              <mat-icon>search_off</mat-icon>
+              <p>Nenhum talento encontrado com os critérios de busca.</p>
+            </div>
+          }
+        </div>
+      </section>
+    </div>
+  </mat-dialog-content>
+</div>

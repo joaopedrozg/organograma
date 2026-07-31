@@ -8,6 +8,8 @@ import { MatFormFieldModule } from '@angular/material/form-field'; // Corrigido
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { AuthService} from '../auth.service';
 
@@ -25,7 +27,9 @@ import {Router} from '@angular/router';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatIconModule
+    MatIconModule,
+    MatSnackBarModule,
+    MatProgressSpinnerModule
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss' // Usando SCSS para aninhamento
@@ -64,9 +68,11 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
 
   private authService = inject(AuthService);
   private router = inject(Router);
+  private snackBar = inject(MatSnackBar);
 
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
+  isSubmitting = signal(false);
 
 
   ngAfterViewInit(): void {
@@ -200,20 +206,26 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
     if (this.loginForm.invalid) return;
 
     this.isLoading.set(true);
+    this.isSubmitting.set(true);
     this.errorMessage.set(null);
 
     // Chama o serviço de Login
     this.authService.login(this.loginForm.value).subscribe({
       next: (res) => {
         this.isLoading.set(false);
+        this.isSubmitting.set(false);
+        this.snackBar.open('Login realizado com sucesso.', 'Fechar', { duration: 2500 });
 
         // Redireciona o usuário para a página principal / dashboard
         this.router.navigate(['/dashboard']);
       },
       error: (err) => {
         this.isLoading.set(false);
+        this.isSubmitting.set(false);
         // Exibe mensagem de erro da API ou padrão
-        this.errorMessage.set(err.error?.message || 'E-mail ou senha inválidos.');
+        const message = err.error?.message || 'E-mail ou senha inválidos.';
+        this.errorMessage.set(message);
+        this.snackBar.open(message, 'Fechar', { duration: 4000 });
       }
     });
   }

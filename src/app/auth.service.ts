@@ -15,7 +15,8 @@ export interface AuthUser {
 }
 
 export interface AuthResponse {
-  token: string;
+  access_token: string;
+  token?: string;
   user: AuthUser;
 }
 
@@ -26,7 +27,7 @@ export class AuthService {
   private http = inject(HttpClient);
 
   // Altere para a URL base da sua API
-  private readonly API_URL = 'http://localhost:3000';
+  private readonly API_URL = '/api/v1';
   private readonly TOKEN_KEY = 'auth_token';
   private readonly USER_KEY = 'auth_user';
 
@@ -39,8 +40,13 @@ export class AuthService {
   login(credentials: LoginCredentials): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.API_URL}/auth/login`, credentials).pipe(
       tap((response) => {
+        const token = response.access_token || response.token;
+        if (!token) {
+          throw new Error('Resposta de login sem token de acesso.');
+        }
+
         // Salva o token JWT e os dados do usuário no sessionStorage
-        sessionStorage.setItem(this.TOKEN_KEY, response.token);
+        sessionStorage.setItem(this.TOKEN_KEY, token);
         sessionStorage.setItem(this.USER_KEY, JSON.stringify(response.user));
 
         // Atualiza o Signal reativo com os dados do usuário

@@ -31,13 +31,21 @@
           </button>
         </mat-form-field>
 
+        @if (errorMessage()) {
+          <mat-error class="login-error">{{ errorMessage() }}</mat-error>
+        }
+
         <button
           mat-raised-button
           color="primary"
           type="submit"
           class="full-width submit-btn premium-btn"
-          [disabled]="loginForm.invalid">
-          Entrar
+          [disabled]="loginForm.invalid || isSubmitting()">
+          @if (isSubmitting()) {
+            <mat-spinner diameter="18"></mat-spinner>
+          } @else {
+            Entrar
+          }
         </button>
 
       </form>

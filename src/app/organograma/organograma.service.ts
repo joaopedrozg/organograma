@@ -1,16 +1,16 @@
-import { HttpClient } from '@angular/common/http';
-import { Service, inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { Funcionario } from '../models/models';
+import { ApiService } from '../services/api.service';
 
-@Service()
+@Injectable({
+  providedIn: 'root'
+})
 export class OrganogramaService {
-  private http = inject(HttpClient);
+  private apiService = inject(ApiService);
 
-  // URL Raw do seu JSON público
-  private apiUrl = 'https://raw.githubusercontent.com/joaopedrozg/dados-users-ficticios/refs/heads/main/users2.json';
-
-  obterDados(): Observable<any> {
-    return this.http.get<any>(this.apiUrl);
+  obterDados(): Observable<Funcionario[]> {
+    return this.apiService.getFuncionarios();
 
   }
 };
