@@ -1,0 +1,31 @@
+<div class="main-layout">
+  <!-- Menu Lateral Retrátil -->
+  <aside class="sidebar premium-glass" [class.collapsed]="isCollapsed">
+
+    <!-- Cabeçalho com Logo e Botão de Recolher -->
+    <div class="sidebar-header">
+      <div class="logo">
+        <mat-icon class="neon-icon">blur_on</mat-icon>
+        <span class="logo-text">Sistema</span>
+      </div>
+      <button mat-icon-button class="toggle-btn" (click)="toggleSidebar()" title="Alternar Menu">
+        <mat-icon>{{ isCollapsed ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+      </button>
+    </div>
+
+    <!-- Navegação -->
+    <nav class="nav-list">
+
+      <a class="nav-item" title="Gerenciar Usuários">
+        <mat-icon>people</mat-icon>
+        <span class="link-text">Funcionários</span>
+      </a>
+
+    </nav>
+  </aside>
+
+  <!-- Área do Conteúdo Principal -->
+  <main class="content-area">
+    <div #chartContainer class="chart-container"></div>
+  </main>
+</div>

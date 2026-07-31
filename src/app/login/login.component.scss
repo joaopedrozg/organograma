@@ -1,0 +1,188 @@
+:host {
+  display: block;
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+// Fundo escuro radial profundo
+background: radial-gradient(circle at center, #1a1c25 0%, #0a0b10 100%);
+}
+
+.webgl-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.login-wrapper {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding: 16px;
+// Efeito de vinheta para foco central
+background: radial-gradient(circle, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.6) 100%);
+}
+
+// --- O Card Glassmorphism ---
+   .login-card.premium-glass {
+     width: 100%;
+     max-width: 420px;
+     padding: 40px;
+     border-radius: 28px !important; // Bordas mais arredondadas
+   background: rgba(20, 22, 30, 0.5) !important; // Mais transparente
+
+   // A mágica do desfoque e saturação
+   backdrop-filter: blur(25px) saturate(200%);
+     -webkit-backdrop-filter: blur(25px) saturate(200%);
+
+   // Borda de vidro sutil e sombra profunda
+   border: 1px solid rgba(255, 255, 255, 0.06) !important;
+     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7) !important;
+
+     mat-card-header {
+       display: flex;
+       flex-direction: column;
+       align-items: center;
+       text-align: center;
+       margin-bottom: 36px;
+       padding: 0;
+
+       mat-card-title {
+         font-size: 2rem;
+         font-weight: 800;
+         color: #ffffff;
+         letter-spacing: -0.8px;
+         margin-bottom: 6px;
+       }
+
+       mat-card-subtitle {
+         font-size: 1rem;
+         color: rgba(255, 255, 255, 0.6);
+         letter-spacing: 0.2px;
+       }
+     }
+
+     mat-card-content {
+       padding: 0;
+     }
+   }
+
+// --- Estilização dos Inputs (Borda Neon) ---
+// --- Estilização dos Inputs (Borda Neon + Texto Visível) ---
+::ng-deep .full-width.premium-input {
+  width: 100%;
+  margin-bottom: 16px;
+
+  // Garantir que a caixa de texto e os ícones fiquem VISÍVEIS e POR CIMA de tudo
+  .mat-mdc-input-element {
+    color: #ffffff !important;
+    caret-color: #0fbcf9 !important; // Cor do cursor piscando
+    background: transparent !important;
+    position: relative;
+    z-index: 5;
+  }
+
+  .mat-mdc-form-field-icon-prefix,
+  .mat-mdc-form-field-icon-suffix mat-icon {
+    color: rgba(255, 255, 255, 0.8) !important;
+    position: relative;
+    z-index: 5;
+  }
+
+  // Cor do Label e Placeholder
+  .mat-mdc-form-field-label label,
+  .mat-mdc-input-element::placeholder {
+    color: rgba(255, 255, 255, 0.4) !important;
+  }
+
+  // --- Borda Padrão (Sem Foco) ---
+  .mdc-notched-outline__leading,
+  .mdc-notched-outline__notch,
+  .mdc-notched-outline__trailing {
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    transition: border-color 0.3s ease;
+  }
+
+  // Hover na borda
+  &:hover {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: rgba(255, 255, 255, 0.35) !important;
+    }
+  }
+
+  // --- Borda Neon Apenas no Foco (Sem cobrir o texto!) ---
+  &.mat-focused {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: #0fbcf9 !important; // Borda Ciano Vibrante
+      border-width: 2px !important;
+      // Sombra Neon externa apenas
+      filter: drop-shadow(0 0 6px rgba(15, 188, 249, 0.5));
+    }
+
+    .mat-mdc-form-field-label label {
+      color: #0fbcf9 !important; // Cor Ciano no Label focado
+    }
+
+    .mat-mdc-form-field-icon-prefix {
+      color: #0fbcf9 !important; // Ícone brilha junto
+    }
+  }
+}
+
+// --- Link Esqueci Senha ---
+   .forgot-password {
+     display: block;
+     text-align: right;
+     color: rgba(255, 255, 255, 0.5);
+     text-decoration: none;
+     font-size: 0.85rem;
+     margin-top: -8px;
+     margin-bottom: 24px;
+     transition: color 0.2s;
+
+     &:hover {
+       color: #0fbcf9; // Brilha ciano no hover
+     }
+   }
+
+// --- Botão Premium Vibrante ---
+   .submit-btn.premium-btn {
+     width: 100%;
+     padding: 28px 0;
+     font-size: 1.15rem;
+     font-weight: 700;
+     letter-spacing: 0.8px;
+     border-radius: 16px;
+     text-transform: uppercase;
+     transition: all 0.3s ease;
+
+   // Gradiente Roxa/Ciano Vibrante
+   background: linear-gradient(135deg, #8e44ad 0%, #0fbcf9 100%) !important;
+
+   // Glow Intenso (O "Foda")
+   box-shadow: 0 6px 20px rgba(165, 94, 234, 0.4),
+   0 0 30px rgba(15, 188, 249, 0.3) !important;
+
+     &:hover:not([disabled]) {
+       transform: translateY(-2px);
+       box-shadow: 0 8px 25px rgba(165, 94, 234, 0.5),
+       0 0 40px rgba(15, 188, 249, 0.4) !important;
+     }
+
+     &[disabled] {
+       background: rgba(255, 255, 255, 0.1) !important;
+       color: rgba(255, 255, 255, 0.2) !important;
+       box-shadow: none !important;
+     }
+   }
