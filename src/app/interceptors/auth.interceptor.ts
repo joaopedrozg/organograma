@@ -8,14 +8,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
   const token = authService.getToken();
+  const apiHosts = ['192.168.203.1:3000', 'localhost:3000', '127.0.0.1:3000'];
 
   // URL base da API para verificar se a requisição é interna
-  // Verificamos localhost:3000 para cobrir tanto com /api/v1 quanto sem
-  // Também adicionamos :3000 para garantir que pegamos a porta correta
-  // Adicionamos verificação para as rotas específicas da v1
-  const isLocalApi = req.url.includes('localhost:3000') ||
-                     req.url.includes('127.0.0.1:3000') ||
-                     req.url.startsWith('http://localhost:3000') ||
+  // Cobrimos o host atual da API e os aliases locais ainda usados em desenvolvimento.
+  // Também mantemos a verificação das rotas relativas da v1, que são as usadas pelos services.
+  const isLocalApi = apiHosts.some((host) => req.url.includes(host)) ||
                      req.url.includes('/api/v1/');
 
   // Ignorar chamadas de login para evitar loop ou erros desnecessários,
