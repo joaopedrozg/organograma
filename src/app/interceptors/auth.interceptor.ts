@@ -8,7 +8,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
   const token = authService.getToken();
-  const apiHosts = ['192.168.203.1:3000', 'localhost:3000', '127.0.0.1:3000'];
+  const apiHosts = ['65.108.51.6:3000', 'localhost:3000', '127.0.0.1:3000'];
 
   // URL base da API para verificar se a requisição é interna
   // Cobrimos o host atual da API e os aliases locais ainda usados em desenvolvimento.
