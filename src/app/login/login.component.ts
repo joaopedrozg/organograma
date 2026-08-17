@@ -222,8 +222,8 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
       error: (err) => {
         this.isLoading.set(false);
         this.isSubmitting.set(false);
-        // Exibe mensagem de erro da API ou padrão
-        const message = err.error?.message || 'E-mail ou senha inválidos.';
+        // Exibe mensagem de erro do Supabase ou padrão
+        const message = err?.message || err?.error?.message || 'E-mail ou senha inválidos.';
         this.errorMessage.set(message);
         this.snackBar.open(message, 'Fechar', { duration: 4000 });
       }

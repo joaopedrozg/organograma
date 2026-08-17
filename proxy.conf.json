@@ -1,8 +1,0 @@
-{
-  "/api/v1": {
-    "target": "http://65.108.51.6:3000",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "warn"
-  }
-}

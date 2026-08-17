@@ -1,7 +1,7 @@
-import { Component, Inject, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
+import { MatDialogModule, MatDialogRef, MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,11 +13,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { ApiService } from '../../services/api.service';
 import { Cargo, Departamento, Funcionario } from '../../models/models';
 import { map, startWith } from 'rxjs/operators';
-import { Observable, combineLatest } from 'rxjs';
+import { Observable } from 'rxjs';
 import { TextInputDialogComponent } from '../shared/text-input-dialog/text-input-dialog.component';
+import { AuthService } from '../../auth.service';
 
 @Component({
   selector: 'app-funcionario-modal',
@@ -36,7 +38,8 @@ import { TextInputDialogComponent } from '../shared/text-input-dialog/text-input
     MatIconModule,
     MatDividerModule,
     MatChipsModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatSlideToggleModule
   ],
   templateUrl: './funcionario-modal.component.html',
   styleUrl: './funcionario-modal.component.scss'
@@ -44,6 +47,7 @@ import { TextInputDialogComponent } from '../shared/text-input-dialog/text-input
 export class FuncionarioModalComponent implements OnInit {
   private fb = inject(FormBuilder);
   private apiService = inject(ApiService);
+  private authService = inject(AuthService);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
 
@@ -70,6 +74,8 @@ export class FuncionarioModalComponent implements OnInit {
   ) {
     this.funcionarioForm = this.fb.group({
       name: ['', Validators.required],
+      email: [''],
+      isUsuario: [false],
       cargo: ['', Validators.required],
       departamento: ['', Validators.required],
       parentId: [null],
@@ -80,9 +86,25 @@ export class FuncionarioModalComponent implements OnInit {
   ngOnInit(): void {
     this.carregarDados();
     this.setupFilters();
+    this.setupUserModeValidation();
 
     this.buscaControl.valueChanges.subscribe(val => {
       this.filtrarFuncionarios(val || '');
+    });
+  }
+
+  setupUserModeValidation(): void {
+    this.funcionarioForm.get('isUsuario')?.valueChanges.subscribe((isUsuario) => {
+      const emailControl = this.funcionarioForm.get('email');
+      if (!emailControl) return;
+
+      if (isUsuario) {
+        emailControl.setValidators([Validators.required, Validators.email]);
+      } else {
+        emailControl.clearValidators();
+      }
+
+      emailControl.updateValueAndValidity();
     });
   }
 
@@ -184,8 +206,17 @@ export class FuncionarioModalComponent implements OnInit {
       return;
     }
 
+    if (formValue.isUsuario && !formValue.email) {
+      this.snackBar.open('Informe um e-mail para criar funcionário como usuário.', 'Fechar', {
+        duration: 4000
+      });
+      return;
+    }
+
     const funcionario: Funcionario = {
       name: formValue.name,
+      email: formValue.email ? String(formValue.email).trim().toLowerCase() : undefined,
+      isUsuario: Boolean(formValue.isUsuario),
       cargoId: formValue.cargo.id,
       departamentoId: formValue.departamento.id,
       parentId: formValue.parentId ? formValue.parentId.id : null,
@@ -194,35 +225,62 @@ export class FuncionarioModalComponent implements OnInit {
 
     this.isSaving.set(true);
 
-    if (this.editingFuncionarioId) {
-      this.apiService.updateFuncionario(this.editingFuncionarioId, funcionario).subscribe(() => {
+    const save$ = this.editingFuncionarioId
+      ? this.apiService.updateFuncionario(this.editingFuncionarioId, funcionario)
+      : this.apiService.createFuncionario(funcionario);
+
+    save$.subscribe({
+      next: (savedFuncionario) => {
+        this.handleInviteAndFinalize(savedFuncionario);
+      },
+      error: () => {
         this.isSaving.set(false);
-        this.resetForm();
-        this.carregarDados();
-        this.snackBar.open('Funcionário atualizado com sucesso.', 'Fechar', {
-          duration: 3000
-        });
-      }, () => {
-        this.isSaving.set(false);
-        this.snackBar.open('Não foi possível atualizar o funcionário.', 'Fechar', {
-          duration: 4000
-        });
-      });
-    } else {
-      this.apiService.createFuncionario(funcionario).subscribe(() => {
-        this.isSaving.set(false);
-        this.resetForm();
-        this.carregarDados();
-        this.snackBar.open('Funcionário cadastrado com sucesso.', 'Fechar', {
-          duration: 3000
-        });
-      }, () => {
-        this.isSaving.set(false);
-        this.snackBar.open('Não foi possível cadastrar o funcionário.', 'Fechar', {
-          duration: 4000
-        });
-      });
+        this.snackBar.open(
+          this.editingFuncionarioId
+            ? 'Não foi possível atualizar o funcionário.'
+            : 'Não foi possível cadastrar o funcionário.',
+          'Fechar',
+          { duration: 4000 }
+        );
+      }
+    });
+  }
+
+  private handleInviteAndFinalize(savedFuncionario: Funcionario): void {
+    const shouldInvite = Boolean(
+      savedFuncionario.isUsuario &&
+      savedFuncionario.email &&
+      savedFuncionario.id &&
+      !savedFuncionario.authUserId
+    );
+    if (!shouldInvite) {
+      this.onSaveSuccess();
+      return;
     }
+
+    this.authService
+      .inviteFuncionarioUser(savedFuncionario.email as string, savedFuncionario.name, savedFuncionario.id as string)
+      .subscribe({
+        next: () => {
+          this.onSaveSuccess('Funcionário salvo e convite enviado para definição de senha.');
+        },
+        error: () => {
+          this.onSaveSuccess(
+            'Funcionário salvo, mas houve falha ao enviar o convite. Verifique a Edge Function invite-funcionario-user.'
+          );
+        }
+      });
+  }
+
+  private onSaveSuccess(message?: string): void {
+    this.isSaving.set(false);
+    this.resetForm();
+    this.carregarDados();
+    this.snackBar.open(
+      message || (this.editingFuncionarioId ? 'Funcionário atualizado com sucesso.' : 'Funcionário cadastrado com sucesso.'),
+      'Fechar',
+      { duration: 3500 }
+    );
   }
 
   editar(f: Funcionario): void {
@@ -230,6 +288,8 @@ export class FuncionarioModalComponent implements OnInit {
     const gestorAtual = this.funcionarios().find(funcionario => funcionario.id === f.parentId) || null;
     this.funcionarioForm.patchValue({
       name: f.name,
+      email: f.email || '',
+      isUsuario: Boolean(f.isUsuario),
       cargo: f.cargo,
       departamento: f.departamento,
       parentId: gestorAtual,

@@ -9,7 +9,7 @@
     </button>
   </div>
 
-  <mat-dialog-content class="mat-typography custom-scroll">
+  <mat-dialog-content class="mat-typography">
     <div class="grid-layout">
       <!-- Coluna Formulário (Esquerda) -->
       <section class="form-section glass-card">
@@ -25,6 +25,15 @@
               <input matInput formControlName="name" placeholder="Ex: João Silva">
               <mat-icon matPrefix>account_circle</mat-icon>
             </mat-form-field>
+
+            @if (funcionarioForm.get('isUsuario')?.value) {
+              <mat-form-field appearance="outline">
+                <mat-label>E-mail do usuário</mat-label>
+                <input matInput formControlName="email" placeholder="colaborador@empresa.com">
+                <mat-icon matPrefix>alternate_email</mat-icon>
+                <mat-hint>Será enviado um link para definir a senha.</mat-hint>
+              </mat-form-field>
+            }
 
             <mat-form-field appearance="outline">
               <mat-label>URL da Imagem</mat-label>
@@ -85,13 +94,14 @@
           </div>
 
           <div class="form-actions">
+            
             <button mat-flat-button class="btn-gradient" (click)="salvar()" [disabled]="funcionarioForm.invalid || isSaving()">
               @if (isSaving()) {
                 <mat-spinner diameter="18"></mat-spinner>
               } @else {
                 <mat-icon>{{ editingFuncionarioId ? 'save' : 'person_add' }}</mat-icon>
               }
-              {{ editingFuncionarioId ? 'Salvar Alterações' : 'Contratar Agora' }}
+              {{ editingFuncionarioId ? 'Salvar Alterações' : 'Cadastrar Colaborador' }}
             </button>
             @if (editingFuncionarioId) {
               <button mat-stroked-button (click)="resetForm()" color="warn">
@@ -99,6 +109,9 @@
                 Cancelar
               </button>
             }
+            <mat-slide-toggle formControlName="isUsuario" color="primary">
+              Usuário?
+            </mat-slide-toggle>
           </div>
         </form>
       </section>
